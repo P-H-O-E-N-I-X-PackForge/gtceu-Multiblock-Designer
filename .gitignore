@@ -1,0 +1,41 @@
+# Build outputs
+/build/
+/out/
+/.gradle/
+
+# IDE files
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Runtime
+/run/
+/run-data/
+/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Libs
+/libs/
+
+# Compiled files
+*.class
+
+# Crash/Testing
+/crash-reports/
+/screenshots/
+/saves/
+/config/
+/mods/
+
+# Packages
+*.jar
+!gradle/wrapper/*.jar
+!gradle-wrapper.jar
+
+# jenv
+.java-version
