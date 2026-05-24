@@ -107,7 +107,8 @@ public class DesignerCommands {
             return 0;
         }
         MultiblockDefinition def = defOpt.get();
-        DefinitionExporter.ExportResult result = DefinitionExporter.export(src.getServer(), def);
+        // Default to KubeJS for now via command (false = not Java)
+        DefinitionExporter.ExportResult result = DefinitionExporter.export(src.getServer(), def, false);
 
         if (result.success) {
             src.sendSuccess(() -> Component.literal("[Designer] Exported '%s':".formatted(def.displayName)), false);

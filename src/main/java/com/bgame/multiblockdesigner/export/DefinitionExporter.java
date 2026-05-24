@@ -43,7 +43,7 @@ public class DefinitionExporter {
         }
     }
 
-    public static ExportResult export(MinecraftServer server, MultiblockDefinition def) {
+    public static ExportResult export(MinecraftServer server, MultiblockDefinition def, boolean exportJava) {
         try {
             Path exportDir = server.getServerDirectory().toPath()
                     .resolve("multiblock_designer")
@@ -55,10 +55,13 @@ public class DefinitionExporter {
                     .replaceAll("_+", "_")
                     .replaceAll("^_|_$", "");
 
-            Path jsFile = exportDir.resolve(safeName + "_" + def.id + ".js");
-            Files.writeString(jsFile, KubeJSExporter.export(def));
+            String extension = exportJava ? ".java" : ".js";
+            Path outFile = exportDir.resolve(safeName + "_" + def.id + extension);
+            String content = exportJava ? JavaExporter.export(def) : KubeJSExporter.export(def);
 
-            return ExportResult.ok(jsFile.toAbsolutePath().toString());
+            Files.writeString(outFile, content);
+
+            return ExportResult.ok(outFile.toAbsolutePath().toString());
 
         } catch (IOException e) {
             return new ExportResult("Export error: " + e.getMessage());

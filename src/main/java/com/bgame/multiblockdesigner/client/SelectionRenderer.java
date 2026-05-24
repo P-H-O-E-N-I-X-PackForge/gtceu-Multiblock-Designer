@@ -1,5 +1,6 @@
 package com.bgame.multiblockdesigner.client;
 
+import com.bgame.multiblockdesigner.item.CopyToolItem;
 import com.bgame.multiblockdesigner.item.DesignerWandItem;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -17,9 +18,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
-/** Renders the selection box and corner marker when using the Designer Wand.
- * Only active when holding the wand, Corner A is set, and scan is not done yet.
- * Corner A is shown as a small yellow outline on the block.
+/** Renders the selection box and corner marker when using the Designer Wand or Copy Tool.
+ * Only active when holding the wand/tool, and corners are being set.
  */
 @OnlyIn(Dist.CLIENT)
 public class SelectionRenderer {
@@ -38,21 +38,36 @@ public class SelectionRenderer {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
 
-        // Only active when holding the wand
+        // Only active when holding the wand or copy tool
         ItemStack held = mc.player.getMainHandItem();
-        if (!(held.getItem() instanceof DesignerWandItem)) {
+        boolean isWand = held.getItem() instanceof DesignerWandItem;
+        boolean isCopyTool = held.getItem() instanceof CopyToolItem;
+
+        if (!isWand && !isCopyTool) {
             held = mc.player.getOffhandItem();
-            if (!(held.getItem() instanceof DesignerWandItem)) return;
+            isWand = held.getItem() instanceof DesignerWandItem;
+            isCopyTool = held.getItem() instanceof CopyToolItem;
+            if (!isWand && !isCopyTool) return;
         }
 
-        // Only show when Corner A is set and scan is NOT done yet
-        if (!DesignerWandItem.hasCornerAPublic(held) || DesignerWandItem.isScanDone(held)) return;
+        BlockPos cornerA = null;
+        BlockPos cornerB = null;
+        boolean showSelection = false;
 
-        BlockPos cornerA = DesignerWandItem.getCornerA(held);
-        if (cornerA == null) return;
+        if (isWand) {
+            // Only show when Corner A is set and scan is NOT done yet
+            if (DesignerWandItem.hasCornerAPublic(held) && !DesignerWandItem.isScanDone(held)) {
+                cornerA = DesignerWandItem.getCornerA(held);
+                cornerB = getLookedAtBlock(mc);
+                showSelection = true;
+            }
+        } else {
+            cornerA = CopyToolItem.getPosFromStack(held, CopyToolItem.NBT_POS1);
+            cornerB = CopyToolItem.getPosFromStack(held, CopyToolItem.NBT_POS2);
+            showSelection = cornerA != null || cornerB != null;
+        }
 
-        // Get the block the player is looking at right now
-        BlockPos cornerB = getLookedAtBlock(mc);
+        if (!showSelection || (cornerA == null && cornerB == null)) return;
 
         Camera camera = event.getCamera();
         PoseStack poseStack = event.getPoseStack();
@@ -63,11 +78,21 @@ public class SelectionRenderer {
                 -camera.getPosition().z
         );
 
-        // Always draw Corner A marker
-        renderCornerMarker(poseStack, cornerA);
+        if (isWand) {
+            // Always draw Corner A marker for Wand
+            if (cornerA != null) renderCornerMarker(poseStack, cornerA);
 
-        if (cornerB != null && !cornerB.equals(cornerA)) {
-            renderVolume(poseStack, cornerA, cornerB);
+            if (cornerB != null && !cornerB.equals(cornerA)) {
+                renderVolume(poseStack, cornerA, cornerB);
+            }
+        } else {
+            // Copy tool rendering
+            if (cornerA != null && cornerB != null) {
+                renderVolume(poseStack, cornerA, cornerB);
+            } else {
+                BlockPos single = (cornerA != null) ? cornerA : cornerB;
+                renderCornerMarker(poseStack, single);
+            }
         }
 
         poseStack.popPose();

@@ -1,6 +1,7 @@
 package com.bgame.multiblockdesigner.registry;
 
 import com.bgame.multiblockdesigner.MultiblockDesignerMod;
+import com.bgame.multiblockdesigner.item.CopyToolItem;
 import com.bgame.multiblockdesigner.item.DesignerWandItem;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -15,5 +16,8 @@ public class ModItems {
 
     public static final RegistryObject<DesignerWandItem> DESIGNER_WAND =
             ITEMS.register("designer_wand", DesignerWandItem::new);
+
+    public static final RegistryObject<CopyToolItem> COPY_TOOL =
+            ITEMS.register("copy_tool", () -> new CopyToolItem(new Item.Properties().stacksTo(1)));
 
 }

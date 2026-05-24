@@ -74,7 +74,7 @@ public class DesignerWandItem extends Item {
             return InteractionResult.SUCCESS;
         }
 
-        if (player.isCrouching()) {
+        if (player.isShiftKeyDown()) {
             // Shift + right-click → set Corner B and scan
             BlockPos cornerA = getCornerA(wand);
             int volume = getVolume(cornerA, clicked);

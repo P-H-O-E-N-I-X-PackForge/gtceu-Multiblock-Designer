@@ -8,6 +8,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 
 // Exports a {MultiblockDefinition} as a KubeJS GTCEu startup script.
 public class KubeJSExporter {
@@ -26,19 +27,18 @@ public class KubeJSExporter {
         sb.append("GTCEuStartupEvents.registry('gtceu:machine', event => {\n");
         sb.append("  event.create('").append(machineName).append("', 'multiblock')\n");
         sb.append("    .rotationState(RotationState.NON_Y_AXIS)\n");
-        sb.append("    .recipeType('gtceu:recipe_type') // set your recipe type\n");
-        sb.append("    .appearanceBlock(() => ").append(appearanceBlock(def)).append(")\n");
+        sb.append("    .recipeType('gtceu:recipe_type') // TODO: set your recipe type\n");
+        sb.append("    .appearanceBlock(").append(appearanceBlock(def)).append(")\n");
         sb.append("    .pattern(definition => FactoryBlockPattern.start()\n");
 
         // Aisles — bottom to top (Y ascending)
         for (int y = 0; y < pattern.sizeY; y++) {
-            sb.append("      .aisle(\n");
-            for (int z = 0; z < pattern.sizeZ; z++) {
-                sb.append("        '").append(pattern.aisles[y][z]).append("'");
-                if (z < pattern.sizeZ - 1) sb.append(",");
-                sb.append("\n");
+            String[] aisleRows = pattern.aisles[y];
+            StringJoiner joiner = new StringJoiner(", ");
+            for (String row : aisleRows) {
+                joiner.add("'" + row + "'");
             }
-            sb.append("      )\n");
+            sb.append("      .aisle(").append(joiner.toString()).append(")\n");
         }
 
         // Where clauses
@@ -55,9 +55,11 @@ public class KubeJSExporter {
             RelativeBlock representative = rbs.get(0);
             ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(representative.state.getBlock());
             String blockRef = blockId != null ? blockId.toString() : "minecraft:stone";
+            String blockClassName = representative.state.getBlock().getClass().getName();
 
+            sb.append("      // ").append(key).append(" -> ").append(blockClassName).append("\n");
             sb.append("      .where('").append(key).append("', ");
-            sb.append(whereClause(role, blockRef));
+            sb.append(whereClause(key, representative, blockRef));
             sb.append(")\n");
         }
 
@@ -79,27 +81,16 @@ public class KubeJSExporter {
     }
 
     // Where clause per role
-    private static String whereClause(BlockRole role, String blockId) {
-        return switch (role) {
-            case CASING ->
-                "Predicates.blocks(Block.getBlock('%s'))".formatted(blockId);
-            case ITEM_INPUT ->
-                "Predicates.abilities(PartAbility.IMPORT_ITEMS).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case ITEM_OUTPUT ->
-                "Predicates.abilities(PartAbility.EXPORT_ITEMS).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case FLUID_INPUT ->
-                "Predicates.abilities(PartAbility.IMPORT_FLUIDS).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case FLUID_OUTPUT ->
-                "Predicates.abilities(PartAbility.EXPORT_FLUIDS).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case ENERGY_INPUT ->
-                "Predicates.abilities(PartAbility.INPUT_ENERGY).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case MUFFLER ->
-                "Predicates.abilities(PartAbility.MUFFLER).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            case MAINTENANCE ->
-                "Predicates.abilities(PartAbility.MAINTENANCE).or(Predicates.blocks(Block.getBlock('%s')))".formatted(blockId);
-            default ->
-                "Predicates.blocks(Block.getBlock('%s'))".formatted(blockId);
-        };
+    private static String whereClause(Character key, RelativeBlock rb, String blockId) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Predicates.blocks('").append(blockId).append("')");
+
+        if (!rb.abilities.isEmpty()) {
+            for (String ability : rb.abilities) {
+                sb.append("\n        .or(Predicates.abilities(PartAbility.").append(ability).append("))");
+            }
+        }
+        return sb.toString();
     }
 
     // Helpers

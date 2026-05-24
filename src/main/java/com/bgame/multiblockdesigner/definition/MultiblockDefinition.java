@@ -52,7 +52,7 @@ public class MultiblockDefinition {
             if (sb.state.isAir()) continue;
 
             BlockPos rel = sb.pos.subtract(origin);
-            relBlocks.add(new RelativeBlock(rel, sb.state, sb.role));
+            relBlocks.add(new RelativeBlock(rel, sb.state, sb.role, sb.abilities));
 
             minX = Math.min(minX, rel.getX()); minY = Math.min(minY, rel.getY()); minZ = Math.min(minZ, rel.getZ());
             maxX = Math.max(maxX, rel.getX()); maxY = Math.max(maxY, rel.getY()); maxZ = Math.max(maxZ, rel.getZ());

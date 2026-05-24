@@ -12,11 +12,19 @@ public class RelativeBlock {
     public final BlockPos relPos;   // offset from controller
     public final BlockState state;
     public final BlockRole role;
+    public final java.util.List<String> abilities = new java.util.ArrayList<>();
 
     public RelativeBlock(BlockPos relPos, BlockState state, BlockRole role) {
         this.relPos  = relPos;
         this.state   = state;
         this.role    = role;
+    }
+
+    public RelativeBlock(BlockPos relPos, BlockState state, BlockRole role, java.util.List<String> abilities) {
+        this.relPos  = relPos;
+        this.state   = state;
+        this.role    = role;
+        this.abilities.addAll(abilities);
     }
 
     // NBT
@@ -28,6 +36,13 @@ public class RelativeBlock {
         ResourceLocation key = ForgeRegistries.BLOCKS.getKey(state.getBlock());
         tag.putString("block", key != null ? key.toString() : "minecraft:air");
         tag.putString("role", role.name());
+
+        if (!abilities.isEmpty()) {
+            net.minecraft.nbt.ListTag list = new net.minecraft.nbt.ListTag();
+            for (String a : abilities) list.add(net.minecraft.nbt.StringTag.valueOf(a));
+            tag.put("abilities", list);
+        }
+
         return tag;
     }
 
@@ -41,6 +56,14 @@ public class RelativeBlock {
         BlockRole role;
         try { role = BlockRole.valueOf(tag.getString("role")); }
         catch (IllegalArgumentException e) { role = BlockRole.UNKNOWN; }
-        return new RelativeBlock(pos, state, role);
+
+        RelativeBlock rb = new RelativeBlock(pos, state, role);
+        if (tag.contains("abilities")) {
+            net.minecraft.nbt.ListTag list = tag.getList("abilities", 8);
+            for (int i = 0; i < list.size(); i++) {
+                rb.abilities.add(list.getString(i));
+            }
+        }
+        return rb;
     }
 }

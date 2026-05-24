@@ -16,6 +16,7 @@ public class BlockTypeGroup {
     public final BlockState representativeState;
     public final List<ScannedBlock> blocks = new ArrayList<>();
     public BlockRole role = BlockRole.UNKNOWN;
+    public final List<String> abilities = new ArrayList<>();
 
     public boolean expanded = false;
 
@@ -25,6 +26,10 @@ public class BlockTypeGroup {
 
     public void add(ScannedBlock block) {
         blocks.add(block);
+        if (blocks.size() == 1) {
+            this.role = block.role;
+            this.abilities.addAll(block.abilities);
+        }
     }
 
     // Applies this group's role to all member ScannedBlocks
@@ -32,6 +37,18 @@ public class BlockTypeGroup {
         this.role = newRole;
         for (ScannedBlock b : blocks) {
             b.role = newRole;
+        }
+    }
+
+    public void setAbility(String ability, boolean active) {
+        if (active) {
+            if (!abilities.contains(ability)) abilities.add(ability);
+        } else {
+            abilities.remove(ability);
+        }
+        for (ScannedBlock b : blocks) {
+            b.abilities.clear();
+            b.abilities.addAll(abilities);
         }
     }
 

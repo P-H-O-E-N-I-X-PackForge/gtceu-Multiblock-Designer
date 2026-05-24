@@ -34,5 +34,10 @@ public class ModNetwork {
                 .decoder(CPacketSaveDefinition::decode)
                 .consumerMainThread(CPacketSaveDefinition::handle)
                 .add();
+        CHANNEL.messageBuilder(SPacketClipboard.class, id++, NetworkDirection.PLAY_TO_CLIENT)
+                .encoder(SPacketClipboard::encode)
+                .decoder(SPacketClipboard::decode)
+                .consumerMainThread(SPacketClipboard::handle)
+                .add();
     }
 }

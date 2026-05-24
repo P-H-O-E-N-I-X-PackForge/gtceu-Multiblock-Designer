@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "gtceu_multiblock_designer:item/copy_tool"
+  }
+}
